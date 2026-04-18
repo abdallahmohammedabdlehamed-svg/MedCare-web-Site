@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Doctor Profile | MedCare</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1db5c9;
+            --primary-glow: rgba(29, 181, 201, 0.3);
+            --bg: #0b0f1a; 
+            --card-bg: rgba(30, 41, 59, 0.4);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        [data-theme="light"] {
+            --bg: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --glass-border: rgba(0, 0, 0, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        body { background-color: var(--bg); color: var(--text-main); overflow-x: hidden; }
+
+        /* --- 1. Header & Actions --- */
+        .top-nav {
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            position: sticky; top: 0; z-index: 1000;
+        }
+
+        .btn-action {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 12px 25px;
+            border-radius: 15px;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex; align-items: center; gap: 10px;
+            cursor: pointer;
+        }
+        .btn-action:hover { background: var(--primary); color: white; transform: translateY(-3px); box-shadow: 0 10px 20px var(--primary-glow); }
+
+        /* --- 2. Profile Layout --- */
+        .main-wrapper {
+            max-width: 1300px; margin: 0 auto; padding: 20px;
+            display: grid; grid-template-columns: 400px 1fr; gap: 40px;
+        }
+
+        /* Side Card - الحركة الـ 3D */
+        .profile-side {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 40px;
+            border: 1px solid var(--glass-border);
+            padding: 50px 30px;
+            text-align: center;
+            height: fit-content;
+            position: sticky; top: 120px;
+            animation: slideInLeft 0.8s ease-out;
+        }
+
+        .img-container {
+            position: relative; width: 220px; height: 220px; margin: 0 auto 30px;
+        }
+        .doc-img {
+            width: 100%; height: 100%; border-radius: 50%;
+            object-fit: cover; border: 6px solid var(--bg);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .status-online {
+            position: absolute; bottom: 15px; right: 25px;
+            width: 25px; height: 25px; background: #10b981;
+            border-radius: 50%; border: 4px solid var(--bg);
+        }
+
+        .side-info h2 { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
+        .spec-label { 
+            color: var(--primary); font-weight: 600; letter-spacing: 2px;
+            text-transform: uppercase; font-size: 14px; display: block; margin-bottom: 30px;
+        }
+
+        /* التواصل الاجتماعي */
+        .social-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+        .social-item {
+            background: rgba(255,255,255,0.05); padding: 15px; border-radius: 18px;
+            color: var(--text-main); text-decoration: none; font-size: 20px;
+        }
+        .social-item:hover { background: var(--primary); color: white; transform: scale(1.1); }
+
+        /* --- 3. Details Content --- */
+        .profile-main { animation: slideInUp 0.8s ease-out; }
+
+        .info-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 40px;
+            border: 1px solid var(--glass-border);
+            padding: 50px; margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex; align-items: center; gap: 15px; margin-bottom: 30px;
+        }
+        .section-header i { 
+            width: 50px; height: 50px; background: var(--primary-glow);
+            color: var(--primary); display: grid; place-items: center;
+            border-radius: 15px; font-size: 22px;
+        }
+
+        .bio-p { font-size: 18px; color: var(--text-muted); line-height: 1.9; }
+
+        /* كروت الإحصائيات */
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 40px 0; }
+        .stat-box {
+            background: rgba(255,255,255,0.03); padding: 25px; border-radius: 25px;
+            text-align: center; border: 1px solid var(--glass-border);
+        }
+        .stat-box h3 { font-size: 30px; color: var(--primary); }
+        .stat-box p { font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-top: 5px; }
+
+        /* المهارات */
+        .skills-container { display: flex; flex-wrap: wrap; gap: 12px; }
+        .skill-tag {
+            background: var(--primary-glow); color: var(--primary);
+            padding: 10px 20px; border-radius: 50px; font-weight: 600; font-size: 14px;
+        }
+
+        /* زر الحجز العملاق */
+        .booking-cta {
+            width: 100%; padding: 25px; background: var(--primary);
+            color: white; border: none; border-radius: 25px;
+            font-size: 20px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 20px 40px var(--primary-glow);
+            margin-top: 20px;
+        }
+        .booking-cta:hover { transform: scale(1.02); background: #16a2b5; }
+
+        /* --- Animations --- */
+        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 1000px) {
+            .main-wrapper { grid-template-columns: 1fr; }
+            .profile-side { position: relative; top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav">
+        <a href="HOME.html#doctors" class="btn-action"><i class="fa-solid fa-chevron-left"></i> Back to Elite</a>
+        <button class="btn-action" onclick="toggleTheme()" id="theme-trigger">
+            <i class="fa-solid fa-moon"></i> <span>Dark Mode</span>
+        </button>
+    </nav>
+
+    <div class="main-wrapper">
+        <aside class="profile-side">
+            <div class="img-container">
+                <img id="d-img" src="" class="doc-img">
+                <div class="status-online"></div>
+            </div>
+            <div class="side-info">
+                <h2 id="d-name">...</h2>
+                <span id="d-spec" class="spec-label">...</span>
+                
+                <div class="social-grid">
+                    <a href="#" class="social-item" id="d-wa"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#" class="social-item"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="social-item"><i class="fa-solid fa-envelope"></i></a>
+                </div>
+
+                <div class="stat-box" style="background: var(--primary-glow);">
+                    <p style="color: var(--primary); margin:0">Patient Satisfaction</p>
+                    <h3 style="font-size: 35px;">99%</h3>
+                </div>
+            </div>
+        </aside>
+
+        <main class="profile-main">
+            <div class="info-card">
+                <div class="section-header">
+                    <i class="fa-solid fa-address-card"></i>
+                    <h2>Professional Profile</h2>
+                </div>
+                <p id="d-bio" class="bio-p"></p>
+                
+                <div class="stats-row">
+                    <div class="stat-box"><h3 id="d-exp">0</h3><p>Years Exp</p></div>
+                    <div class="stat-box"><h3 id="d-pat">0</h3><p>Success Rate</p></div>
+                    <div class="stat-box"><h3>4.9</h3><p>Rating</p></div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="section-header">
+                    <i class="fa-solid fa-award"></i>
+                    <h2>Expertise & Skills</h2>
+                </div>
+                <div class="skills-container" id="d-skills">
+                    </div>
+            </div>
+
+            <button class="booking-cta"><i class="fa-solid fa-calendar-check"></i> Book Instant Appointment</button>
+        </main>
+    </div>
+
+    <script>
+        const doctorsData = {
+            'sarah': {
+                name: 'Dr. Sarah Ahmed',
+                spec: 'Cardiology Specialist',
+                img: 'https://i.pravatar.cc/400?u=11',
+                bio: 'A visionary in cardiology with a focus on non-invasive heart treatments and advanced diagnostics. Dr. Sarah has successfully treated over 2,000 cases of complex heart conditions.',
+                exp: '15+',
+                pat: '98%',
+                wa: '201000000',
+                skills: ['Heart Failure', 'Echocardiography', 'Hypertension', 'Cardiac MRI', 'Valvular Disease']
+            },
+            'khaled': {
+                name: 'Dr. Khaled Aly',
+                spec: 'Master Surgeon',
+                img: 'https://i.pravatar.cc/400?u=12',
+                bio: 'Pioneer in robotic heart surgery and emergency cardiac interventions. Dr. Khaled is known for his precision and high success rate in complex arterial bypass operations.',
+                exp: '12+',
+                pat: '99%',
+                wa: '201111111',
+                skills: ['Robotic Surgery', 'Bypass Grafting', 'Aortic Repair', 'Thoracic Surgery', 'ER Trauma']
+            },
+            'mona': {
+                name: 'Dr. Mona Hassan',
+                spec: 'Senior Orthodontist',
+                img: 'https://i.pravatar.cc/400?u=13',
+                bio: 'Transforming smiles with the latest in aesthetic dentistry. Dr. Mona is a certified Invisalign platinum provider with a passion for pediatric dental care.',
+                exp: '10+',
+                pat: '100%',
+                wa: '201222222',
+                skills: ['Invisalign', 'Braces', 'Smile Design', 'Pediatric Dental', 'Teeth Whitening']
+            },
+            'ahmed': {
+                name: 'Dr. Ahmed Yassin',
+                spec: 'Ophthalmology Guru',
+                img: 'https://i.pravatar.cc/400?u=14',
+                bio: 'Dedicated to restoring vision through advanced laser technology. Expert in refractive surgeries and early detection of retinal diseases with 18 years of clinical excellence.',
+                exp: '18+',
+                pat: '97%',
+                wa: '201333333',
+                skills: ['LASIK', 'Cataract Surgery', 'Retinal Laser', 'Glaucoma', 'Cornea Transplant']
+            }
+        };
+
+        window.onload = () => {
+            const id = new URLSearchParams(window.location.search).get('id') || 'sarah';
+            const doc = doctorsData[id];
+
+            if(doc) {
+                document.getElementById('d-name').innerText = doc.name;
+                document.getElementById('d-spec').innerText = doc.spec;
+                document.getElementById('d-img').src = doc.img;
+                document.getElementById('d-bio').innerText = doc.bio;
+                document.getElementById('d-exp').innerText = doc.exp;
+                document.getElementById('d-pat').innerText = doc.pat;
+                document.getElementById('d-wa').href = `https://wa.me/${doc.wa}`;
+                document.getElementById('page-title').innerText = doc.name;
+
+                const skillsBox = document.getElementById('d-skills');
+                doc.skills.forEach(skill => {
+                    skillsBox.innerHTML += `<span class="skill-tag">${skill}</span>`;
+                });
+            }
+        };
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btn = document.getElementById('theme-trigger');
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            
+            html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            btn.innerHTML = isDark ? '<i class="fa-solid fa-sun"></i> <span>Light Mode</span>' : '<i class="fa-solid fa-moon"></i> <span>Dark Mode</span>';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Details | MedCare Premium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* --- المتغيرات والتنسيق الأساسي --- */
+        :root {
+            --primary: #1db5c9;
+            --primary-dark: #168a99;
+            --bg-light: #f8fafc;
+            --card-light: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: rgba(0,0,0,0.05);
+        }
+
+        [data-theme="dark"] {
+            --bg-light: #0f172a;
+            --card-light: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: rgba(255,255,255,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-light); color: var(--text-main); transition: 0.3s; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        /* --- الهيدر (Hero Section) --- */
+        .hero { padding: 120px 0 60px; background: linear-gradient(135deg, rgba(29, 181, 201, 0.1), transparent); text-align: center; }
+        .badge { background: rgba(29, 181, 201, 0.1); color: var(--primary); padding: 8px 20px; border-radius: 50px; font-weight: 600; font-size: 14px; }
+        h1 { font-size: 48px; margin: 20px 0; color: var(--text-main); }
+        .hero-img { width: 100%; max-width: 600px; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); margin-top: 30px; border: 8px solid var(--card-light); }
+
+        /* --- التقسيم الرئيسي (Grid) --- */
+        .main-content { padding: 60px 0; display: grid; grid-template-columns: 2fr 1fr; gap: 40px; }
+        
+        .card { background: var(--card-light); padding: 40px; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.02); margin-bottom: 30px; }
+        .card h2 { margin-bottom: 20px; display: flex; align-items: center; gap: 12px; color: var(--text-main); }
+        .card h2 i { color: var(--primary); }
+
+        /* --- النصائح الطبية --- */
+        .tips-list { list-style: none; }
+        .tips-list li { background: var(--bg-light); padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex; gap: 15px; align-items: center; border: 1px solid var(--border); }
+        .tips-list li i { color: var(--primary); }
+
+        /* --- قائمة الدكاترة --- */
+        .doctor-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border); transition: 0.3s; }
+        .doctor-item:last-child { border: none; }
+        .doctor-item img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+        .doctor-item h4 { font-size: 16px; color: var(--text-main); }
+        .doctor-item p { font-size: 13px; color: var(--text-muted); }
+
+        /* --- زر الرجوع والدارك مود --- */
+        .actions { position: fixed; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; z-index: 100; }
+        .btn { padding: 10px 20px; border-radius: 50px; text-decoration: none; font-weight: 600; transition: 0.3s; cursor: pointer; border: none; }
+        .back-btn { background: var(--card-light); color: var(--text-main); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .theme-btn { background: var(--primary); color: white; }
+
+        @media (max-width: 992px) { .main-content { grid-template-columns: 1fr; } h1 { font-size: 32px; } }
+    </style>
+</head>
+<body>
+
+    <div class="actions">
+        <a href="HOME.html#services" class="btn back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+        <button class="btn theme-btn" onclick="toggleTheme()">🌙 Mode</button>
+    </div>
+
+    <header class="hero">
+        <div class="container">
+            <span class="badge" id="badge">Medical Service</span>
+            <h1 id="title">Loading Service...</h1>
+            <p id="subtitle" style="color: var(--text-muted);">Specialized care tailored for your needs.</p>
+            <img id="main-img" src="https://via.placeholder.com/800x400" alt="Service" class="hero-img">
+        </div>
+    </header>
+
+    <main class="container main-content">
+        <div class="left-col">
+            <div class="card">
+                <h2><i class="fa-solid fa-circle-info"></i> Overview</h2>
+                <p id="desc" style="color: var(--text-muted); font-size: 18px;">Information is loading...</p>
+            </div>
+
+            <div class="card">
+                <h2><i class="fa-solid fa-lightbulb"></i> Health Tips</h2>
+                <ul class="tips-list" id="tips-list"></ul>
+            </div>
+        </div>
+
+        <aside class="right-col">
+            <div class="card">
+                <h2><i class="fa-solid fa-user-doctor"></i> Expert Doctors</h2>
+                <div id="docs-list"></div>
+            </div>
+
+            <div class="card" style="background: var(--primary); color: white; text-align: center;">
+                <h3>Need Help?</h3>
+                <p style="margin: 15px 0; font-size: 14px; opacity: 0.9;">Book your appointment now and get 20% off.</p>
+                <button class="btn" style="background: white; color: var(--primary); width: 100%;">Contact Us</button>
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        // 1. قاعدة البيانات المدمجة
+        const db = {
+            'cardiology': {
+                title: 'Cardiology Department',
+                badge: 'Heart Health',
+                desc: 'Our cardiology unit is equipped with advanced technology for diagnosing and treating all heart conditions, from hypertension to surgery.',
+                img: 'img/Richard Zelman MD.jpg',
+                tips: ['Eat heart-healthy fats', 'Exercise 30 mins daily', 'Reduce salt intake'],
+                docs: [
+                    {name: 'Dr. Sarah Ahmed', role: 'Senior Cardiologist', img: 'img/cartoon female doctor.png'},
+                    {name: 'Dr. Khaled Aly', role: 'Heart Surgeon', img: 'img/cartoon doctor.png'}
+                ]
+            },
+            'dental': {
+                title: 'Dental Care Center',
+                badge: 'Oral Care',
+                desc: 'Comprehensive dental services including whitening, implants, and orthodontic treatments for all ages.',
+                img: 'img/Dental Clinic.jpg',
+                tips: ['Brush twice daily', 'Floss every night', 'Avoid sugary snacks'],
+                docs: [
+                    {name: 'Dr. Mona Hassan', role: 'Dentist', img: 'https://i.pravatar.cc/150?u=3'}
+                ]
+            },
+
+            // ضيف دول تحت تخصص الـ dental داخل الـ db
+'ophthalmology': {
+    title: 'Ophthalmology Clinic',
+    badge: 'Eye Care',
+    desc: 'Advanced eye examinations, vision correction surgeries (LASIK), and treatment for all eye diseases using the latest laser technology.',
+    img: 'img/Ophthalmology.jpg',
+    tips: ['Limit screen time', 'Wear sunglasses outdoors', 'Get regular eye exams'],
+    docs: [
+        {name: 'Dr. Ahmed Yassin', role: 'Eye Consultant', img: 'img/cartoon doctor.png'},
+        {name: 'Dr. Laila Nour', role: 'LASIK Specialist', img: 'img/cartoon female doctor.png'}
+    ]
+},
+'laboratory': {
+    title: 'Diagnostic Laboratory',
+    badge: 'Medical Analysis',
+    desc: 'Our modern laboratory provides fast and highly accurate results for all types of medical tests, supported by automated high-tech equipment.',
+    img: 'img/Laboratory.jpg',
+    tips: ['Fast 12 hours before blood tests', 'Drink water before tests', 'Provide previous reports'],
+    docs: [
+        {name: 'Dr. Hany Kamal', role: 'Pathologist', img: 'img/cartoon doctor.png'},
+        {name: 'Dr. Rana Said', role: 'Lab Specialist', img: 'img/cartoon female doctor.png'}
+    ]
+}
+
+
+            
+        };
+
+        // 2. محرك تشغيل الصفحة
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id') || 'cardiology';
+            const data = db[id];
+
+            if (data) {
+                document.getElementById('title').innerText = data.title;
+                document.getElementById('badge').innerText = data.badge;
+                document.getElementById('desc').innerText = data.desc;
+                document.getElementById('main-img').src = data.img;
+
+                const tipsBox = document.getElementById('tips-list');
+                data.tips.forEach(t => tipsBox.innerHTML += `<li><i class="fa-solid fa-check"></i> ${t}</li>`);
+
+                const docsBox = document.getElementById('docs-list');
+                data.docs.forEach(d => docsBox.innerHTML += `
+                    <div class="doctor-item">
+                        <img src="${d.img}">
+                        <div><h4>${d.name}</h4><p>${d.role}</p></div>
+                    </div>`);
+            }
+        };
+
+        // 3. وظيفة الدارك مود
+        function toggleTheme() {
+            const body = document.body;
+            const current = body.getAttribute('data-theme');
+            body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+        }
+    </script>
+</body>
+</html>
