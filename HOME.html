@@ -227,15 +227,22 @@
         </div>
         
         <div class="appointment-wrapper">
+            <div class="time-indicator">
+                <i class="fa-solid fa-clock"></i>
+                <span> Booking takes less than a minute</span>
+            </div>
+            
             <form id="bookingForm" class="booking-form">
                 <div class="form-grid">
                     <div class="input-group">
                         <label><i class="fa-solid fa-user"></i> Full Name</label>
                         <input type="text" id="pName" placeholder="Enter your name" required minlength="3">
+                        <span class="validation-icon" id="nameValidation"></span>
                     </div>
                     <div class="input-group">
                         <label><i class="fa-solid fa-phone"></i> Phone Number</label>
-                        <input type="tel" placeholder="01xxxxxxxxx" maxlength="11" required>
+                        <input type="tel" id="pPhone" placeholder="01xxxxxxxxx" maxlength="11" required>
+                        <span class="validation-icon" id="phoneValidation"></span>
                     </div>
                     <div class="input-group">
                         <label><i class="fa-solid fa-layer-group"></i> Department</label>
@@ -246,21 +253,41 @@
                             <option value="Dental">Dental</option>
                             <option value="Pediatrics">Pediatrics</option>
                         </select>
+                        <span class="validation-icon" id="deptValidation"></span>
                     </div>
                     <div class="input-group">
                         <label><i class="fa-solid fa-user-doctor"></i> Doctor</label>
-                        <select id="docSelect" required>
+                        <select id="docSelect" onchange="updateConsultationFee()" required>
                             <option value="">Select Doctor First</option>
                         </select>
+                        <span class="validation-icon" id="docValidation"></span>
+                        <div class="fee-display" id="feeDisplay"></div>
                     </div>
                     <div class="input-group">
                         <label><i class="fa-solid fa-calendar-day"></i> Select Date</label>
-                        <input type="date" id="appDate" required>
+                        <input type="date" id="appDate" onchange="checkDoubleBooking()" required>
+                        <span class="validation-icon" id="dateValidation"></span>
                     </div>
                     <div class="input-group">
                         <label><i class="fa-solid fa-clock"></i> Select Time</label>
-                        <input type="time" id="appTime" required>
+                        <input type="time" id="appTime" onchange="checkDoubleBooking()" required>
+                        <span class="validation-icon" id="timeValidation"></span>
                     </div>
+                </div>
+
+                <!-- Live Summary Card -->
+                <div class="live-summary" id="liveSummary">
+                    <h4><i class="fa-solid fa-eye"></i> Booking Summary</h4>
+                    <p id="summaryText">Complete the form to see your booking details...</p>
+                </div>
+
+                <!-- WhatsApp Reminder Checkbox -->
+                <div class="whatsapp-reminder">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="whatsappReminder">
+                        <span class="checkmark"></span>
+                       Would you like to receive a confirmation message via WhatsApp?
+                    </label>
                 </div>
 
                 <div class="payment-methods">

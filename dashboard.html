@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
@@ -6,6 +6,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
         :root { 
@@ -124,8 +126,54 @@
         .stat-box i { position: absolute; right: -10px; bottom: -10px; font-size: 80px; opacity: 0.05; color: var(--primary); }
 
         .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 30px; }
-        .widget-box { background: var(--card); padding: 25px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); }
-        .widget-box h3 { margin-top: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+        .widget-box { background: var(--card); padding: 28px 30px; border-radius: 28px; border: 1px solid rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02); }
+        .widget-box h3 { margin-top: 0; margin-bottom: 18px; font-size: 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 14px; }
+        .widget-report-card { min-height: 420px; }
+        .chart-wrapper { height: 260px; position: relative; }
+        .report-controls { display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .report-control { display: flex; flex-direction: column; gap: 10px; min-width: 180px; }
+        .report-control label { font-size: 12px; opacity: .7; text-transform: uppercase; letter-spacing: .08em; }
+        .report-control select { width: 100%; padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; }
+        .report-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .report-metrics { display: grid; gap: 16px; margin-top: 20px; }
+        .report-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .report-card { padding: 22px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); }
+        .report-card span { display: block; font-size: 12px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: .12em; }
+        .report-card h2 { margin-top: 12px; font-size: 34px; color: var(--primary); }
+        .insights-box { display: flex; flex-direction: column; min-height: 260px; justify-content: space-between; background: rgba(255,255,255,0.03); }
+        .insights-text { margin-top: 12px; line-height: 1.8; color: rgba(255,255,255,0.85); font-size: 14px; }
+        .toggle-switch { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
+        .toggle-switch input { display: none; }
+        .toggle-switch .slider {
+            width: 46px; height: 24px; border-radius: 999px; background: rgba(255,255,255,0.12); position: relative; transition: background 0.3s;
+        }
+        .toggle-switch .slider::after {
+            content: ''; position: absolute; left: 4px; top: 4px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.3s;
+        }
+        .toggle-switch input:checked + .slider { background: rgba(29,181,201,0.35); }
+        .toggle-switch input:checked + .slider::after { transform: translateX(22px); }
+        .report-toggle { align-items: flex-end; justify-content: flex-end; }
+        .report-toggle span { color: rgba(255,255,255,0.8); font-size: 13px; }
+        .btn-add { min-width: 170px; }
+        .report-skeleton { display: none; gap: 16px; margin-top: 20px; }
+        .report-skeleton.active { display: grid; }
+        .report-skeleton .skeleton-title { height: 24px; width: 40%; border-radius: 12px; background: linear-gradient(90deg, rgba(255,255,255,0.07), rgba(255,255,255,0.18), rgba(255,255,255,0.07)); animation: shimmer 1.5s infinite; }
+        .report-skeleton .skeleton-row { display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr); }
+        .report-skeleton .skeleton-row.large { grid-template-columns: 2fr 1fr; }
+        .report-skeleton .skeleton-card, .report-skeleton .skeleton-chart { background: rgba(255,255,255,0.05); border-radius: 20px; position: relative; overflow: hidden; }
+        .report-skeleton .skeleton-card { height: 100px; }
+        .report-skeleton .skeleton-chart { height: 220px; }
+        @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+        @media (max-width: 980px) { .dashboard-grid { grid-template-columns: 1fr; } .report-metrics-grid { grid-template-columns: 1fr; } }
+        .report-metrics { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 20px; }
+        .report-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); padding: 18px; border-radius: 20px; }
+        .report-card span { display: block; font-size: 12px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
+        .report-card h2 { margin: 10px 0 0; font-size: 34px; color: var(--primary); }
+        .insights-box { display: flex; flex-direction: column; justify-content: space-between; background: rgba(255,255,255,0.03); }
+        .report-actions { margin-top: 20px; display: flex; justify-content: flex-start; }
+        #downloadPdfBtn { width: 100%; background: rgba(29,181,201,0.12); color: var(--primary); border: 1px solid rgba(29,181,201,0.25); padding: 14px 18px; border-radius: 18px; cursor: pointer; transition: transform 0.2s, background 0.2s; }
+        #downloadPdfBtn:hover { background: rgba(29,181,201,0.2); transform: translateY(-1px); }
+        @media (max-width: 980px) { .dashboard-grid { grid-template-columns: 1fr; } }
 
         .controls-row { 
             display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 25px; background: var(--glass); 
@@ -195,9 +243,89 @@
         .section-content.active { display: block; }
 
         .btn-add { background: var(--primary); color: #000; border: none; padding: 10px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; text-align: left; }
-        .form-group label { display: block; margin-bottom: 5px; font-size: 13px; opacity: 0.8; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: #fff; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 14px; opacity: 0.85; letter-spacing: 0.2px; }
+        .form-group input, .form-group select { width: 100%; padding: 14px 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: rgba(29,181,201,0.8); box-shadow: 0 0 0 3px rgba(29,181,201,0.1); }
+        .form-group input[type="file"] { padding: 14px 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); color: #fff; cursor: pointer; }
+        .form-group input[type="file"]::file-selector-button { border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 14px; color: #fff; cursor: pointer; margin-right: 10px; }
+        .form-group input[type="color"] { padding: 10px; height: 52px; width: 100%; border-radius: 16px; }
+        .file-field { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+        .file-field input[type="file"] { flex: 1 1 100%; }
+        .logo-preview { display: flex; justify-content: center; margin-top: 14px; }
+        .logo-preview img { max-width: 110px; max-height: 110px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.14); object-fit: cover; }
+        .toggle-group { margin-bottom: 0; }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .toggle-row:last-child { border-bottom: none; }
+        .toggle-desc { max-width: calc(100% - 120px); }
+        .toggle-title { display: block; font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+        .toggle-row small { margin: 0; font-size: 13px; opacity: 0.7; line-height: 1.5; }
+        .toggle-label { align-items: center; justify-content: center; }
+
+        /* --- Professional Toast Notification System --- */
+        #toastContainer { 
+            position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: flex; 
+            flex-direction: column; gap: 15px; pointer-events: none;
+        }
+        .toast {
+            background: var(--card); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1);
+            padding: 16px 24px; border-radius: 15px; display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4); animation: slideIn 0.4s cubic-bezier(0.4,0,0.2,1);
+            pointer-events: all; min-width: 320px;
+        }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.info { border-left: 4px solid var(--primary); }
+        .toast.warning { border-left: 4px solid var(--pending); }
+        .toast-icon { font-size: 20px; min-width: 24px; }
+        .toast.success .toast-icon { color: var(--success); }
+        .toast.error .toast-icon { color: var(--danger); }
+        .toast.info .toast-icon { color: var(--primary); }
+        .toast.warning .toast-icon { color: var(--pending); }
+        .toast-message { font-size: 14px; font-weight: 500; flex: 1; }
+        .toast-close { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 16px; padding: 0; }
+        .toast-close:hover { color: rgba(255,255,255,0.8); }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(400px); opacity: 0; } }
+        .toast.removing { animation: slideOut 0.4s cubic-bezier(0.4,0,0.2,1) forwards; }
+
+        /* --- System Activity Log Widget --- */
+        .activity-log {
+            background: var(--card); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);
+            padding: 20px; max-height: 300px; overflow-y: auto;
+        }
+        .activity-item {
+            padding: 12px 15px; border-left: 3px solid var(--primary); background: rgba(29,181,201,0.05);
+            border-radius: 8px; margin-bottom: 10px; font-size: 13px; line-height: 1.6;
+        }
+        .activity-item:last-child { margin-bottom: 0; }
+        .activity-time { font-size: 11px; opacity: 0.5; display: block; margin-top: 4px; font-family: 'Courier New', monospace; }
+        .activity-action { color: var(--primary); font-weight: 600; }
+
+        /* --- Live Status Indicator --- */
+        .live-status {
+            display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px;
+            background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3);
+            border-radius: 20px; font-size: 12px; font-weight: 600;
+        }
+        .status-pulse {
+            width: 8px; height: 8px; border-radius: 50%; background: var(--success);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); } 50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(46, 204, 113, 0); } }
+
+        /* --- Prescription Input in Modal --- */
+        .prescription-section {
+            background: rgba(0,0,0,0.2); padding: 16px; border-radius: 12px; margin: 20px 0;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .prescription-label { font-size: 12px; color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+        .prescription-input {
+            width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; color: #fff; font-size: 13px; font-family: 'Poppins', sans-serif;
+        }
+        .prescription-input::placeholder { color: rgba(255,255,255,0.4); }
+        .prescription-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(29,181,201,0.1); }
 
         @media (max-width: 992px) {
             .dashboard-grid { grid-template-columns: 1fr; }
@@ -205,7 +333,46 @@
             body.logged-in .main-content { margin-left: 0; }
             .sidebar { transform: translateX(-100%); transition: 0.3s; }
             body.sidebar-open .sidebar { transform: translateX(0); display: flex; }
+            #toastContainer { bottom: 20px; right: 20px; }
         }
+
+        /* Settings Tabs */
+        .settings-tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .tab-btn { background: rgba(255,255,255,0.05); border: none; color: #a8cddb; padding: 12px 20px; border-radius: 12px 12px 0 0; cursor: pointer; transition: all 0.3s; font-weight: 500; }
+        .tab-btn.active { background: var(--primary); color: #fff; }
+        .tab-btn:hover { background: rgba(255,255,255,0.1); }
+        .settings-tab { display: none; }
+        .settings-tab.active { display: block; }
+        .settings-actions { margin-top: 30px; display: flex; gap: 15px; justify-content: center; }
+
+        /* Toggle Switches */
+        .toggle-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 0; }
+        .toggle-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; }
+        .toggle-slider { position: relative; width: 50px; height: 24px; background: rgba(255,255,255,0.2); border-radius: 24px; transition: 0.3s; }
+        .toggle-slider:before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s; }
+        input[type="checkbox"]:checked + .toggle-slider { background: var(--primary); }
+        input[type="checkbox"]:checked + .toggle-slider:before { transform: translateX(26px); }
+        input[type="checkbox"] { display: none; }
+
+        /* Logo Preview */
+        .logo-preview { display: flex; justify-content: center; margin-top: 14px; }
+        .logo-preview img { max-width: 110px; max-height: 110px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.14); object-fit: cover; }
+
+        /* Maintenance Actions */
+        .maintenance-actions { display: flex; gap: 15px; flex-wrap: wrap; }
+        .btn-danger { background: var(--danger); color: #fff; border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 500; transition: 0.3s; }
+        .btn-danger:hover { background: #e74c3c; transform: translateY(-2px); }
+        .btn-export { background: var(--success); color: #fff; border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 500; transition: 0.3s; }
+        .btn-export:hover { background: #27ae60; transform: translateY(-2px); }
+        .btn-warning { background: #f39c12; color: #fff; border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 500; transition: 0.3s; }
+        .btn-warning:hover { background: #e67e22; transform: translateY(-2px); }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: #a8cddb; border: 1px solid rgba(255,255,255,0.1); padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 500; transition: 0.3s; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+
+        /* Compact Mode */
+        body.compact-mode .widget-box { padding: 15px; }
+        body.compact-mode table tr td, body.compact-mode table tr th { padding: 8px 12px; }
+        body.compact-mode .stat-box { padding: 15px; }
     </style>
 </head>
 <body>
@@ -229,6 +396,9 @@
     </aside>
 
     <div class="main-content">
+        <!-- Toast Container for Notifications -->
+        <div id="toastContainer"></div>
+
         <div class="auth-screen" id="authScreen">
             <div class="login-card">
                 <div style="background: rgba(29, 181, 201, 0.1); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px;">
@@ -254,12 +424,18 @@
 
         <div class="modal" id="statusModal">
             <div class="modal-content">
-                <h3><i class="fa-solid fa-arrows-rotate"></i> Update Status</h3>
-                <p style="opacity:0.6; font-size:14px; margin-bottom: 25px;">Select the current appointment state</p>
-                <button class="status-option" style="background:var(--success);" onclick="changeStatus('Confirmed')">Confirmed</button>
-                <button class="status-option" style="background:var(--pending);" onclick="changeStatus('Pending')">Pending</button>
-                <button class="status-option" style="background:var(--danger);" onclick="changeStatus('Cancelled')">Cancelled</button>
-                <button style="background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer; margin-top:10px;" onclick="closeModal('statusModal')">Dismiss</button>
+                <h3><i class="fa-solid fa-arrows-rotate"></i> Update Status & Prescription</h3>
+                <p style="opacity:0.6; font-size:14px; margin-bottom: 20px;">Manage appointment status and add diagnosis</p>
+                
+                <div class="prescription-section">
+                    <label class="prescription-label"><i class="fa-solid fa-pills"></i> Diagnosis / Prescription</label>
+                    <input type="text" id="prescriptionInput" class="prescription-input" placeholder="e.g., Panadol 500mg x2 daily, Rest 3 days">
+                </div>
+
+                <button class="status-option" style="background:var(--success);" onclick="changeStatus('Confirmed')"><i class="fa-solid fa-check"></i> Confirm Appointment</button>
+                <button class="status-option" style="background:var(--pending);" onclick="changeStatus('Pending')"><i class="fa-solid fa-hourglass"></i> Mark Pending</button>
+                <button class="status-option" style="background:var(--danger);" onclick="changeStatus('Cancelled')"><i class="fa-solid fa-ban"></i> Cancel Appointment</button>
+                <button style="background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer; margin-top:15px; width:100%; padding:10px;" onclick="closeModal('statusModal')">Dismiss</button>
             </div>
         </div>
 
@@ -289,6 +465,22 @@
             </div>
         </div>
 
+        <div class="modal" id="resetModal">
+            <div class="modal-content">
+                <i class="fa-solid fa-exclamation-triangle" style="font-size: 40px; color: var(--danger); margin-bottom: 20px;"></i>
+                <h3>Reset Entire System?</h3>
+                <p style="opacity:0.6; font-size:14px; margin-bottom:20px;">This will permanently delete all bookings, doctors, settings, and activity logs.</p>
+                <div class="form-group">
+                    <label>Type "RESET" to confirm:</label>
+                    <input type="text" id="resetConfirmInput" placeholder="RESET">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:20px;">
+                    <button id="confirmResetBtn" style="background:var(--danger); color:#fff; border:none; padding:12px; border-radius:12px; cursor:pointer; font-weight:bold;" disabled onclick="confirmResetSystem()">Reset System</button>
+                    <button onclick="closeModal('resetModal')" style="background:var(--glass); color:#fff; border:none; padding:12px; border-radius:12px; cursor:pointer;">Cancel</button>
+                </div>
+            </div>
+        </div>
+
         <div class="modal" id="doctorAddModal">
             <div class="modal-content">
                 <h3><i class="fa-solid fa-user-plus"></i> Add Doctor</h3>
@@ -303,11 +495,23 @@
                         <option value="Surgery">Surgery</option>
                         <option value="Dental">Dental</option>
                         <option value="Pediatrics">Pediatrics</option>
+                        <option value="Ophthalmology">Ophthalmology</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Experience (Years)</label>
-                    <input type="number" id="newDocExp">
+                    <input type="number" id="newDocExp" placeholder="e.g., 10">
+                </div>
+                <div class="form-group">
+                    <label>Patients/Operations Count</label>
+                    <input type="number" id="newDocCount" placeholder="e.g., 1500">
+                </div>
+                <div class="form-group">
+                    <label>Profile Image</label>
+                    <input type="file" id="newDocImg" accept="image/*" onchange="previewImage(event)">
+                    <div id="imagePreview" style="margin-top:10px; display:none;">
+                        <img id="previewImg" style="width:80px; height:80px; border-radius:10px; border:2px solid var(--primary);">
+                    </div>
                 </div>
                 <button class="btn-done" onclick="saveDoctor()">Save Doctor</button>
                 <button style="background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer; margin-top:10px;" onclick="closeModal('doctorAddModal')">Cancel</button>
@@ -351,6 +555,38 @@
                     </div>
                 </div>
 
+                <div class="dashboard-grid">
+                    <div class="widget-box" style="min-height: 300px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <h3 style="margin:0; display:flex; align-items:center; gap:10px;">
+                                <i class="fa-solid fa-clock-rotate-left" style="color:var(--primary)"></i> System Activity Log
+                            </h3>
+                            <button onclick="clearActivityLog()" style="background:none; border:none; color:rgba(255,255,255,0.4); cursor:pointer; font-size:12px; padding:5px 10px;">Clear</button>
+                        </div>
+                        <div id="activityLog" class="activity-log"></div>
+                    </div>
+                    <div class="widget-box">
+                        <h3><i class="fa-solid fa-signal" style="color:var(--primary)"></i> System Status</h3>
+                        <div style="margin-top: 20px;">
+                            <div class="live-status" style="margin-bottom:20px;">
+                                <span class="status-pulse"></span>
+                                <span id="syncStatus">System Synced</span>
+                            </div>
+                            <div style="background:rgba(29,181,201,0.05); padding:15px; border-radius:12px; border-left:3px solid var(--primary);">
+                                <p style="margin:0; font-size:13px; line-height:1.8;">
+                                    <strong>Data Points:</strong><br>
+                                    📅 Bookings: <span id="bookingCount">0</span><br>
+                                    👨‍⚕️ Doctors: <span id="doctorCount">0</span><br>
+                                    ✅ Last Sync: <span id="lastSync" style="font-size:11px;">Now</span>
+                                </p>
+                            </div>
+                            <button onclick="exportData()" style="width:100%; margin-top:15px; background:var(--primary); color:#000; border:none; padding:12px; border-radius:10px; cursor:pointer; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px;">
+                                <i class="fa-solid fa-download"></i> Export Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="controls-row">
                     <div class="search-wrapper">
                         <i class="fa-solid fa-magnifying-glass"></i>
@@ -380,14 +616,22 @@
                 </div>
             </div>
 
-            <div id="appointmentsSec" class="section-content">
-                <h2><i class="fa-solid fa-calendar-days"></i> Master Appointment List</h2>
-                <div class="controls-row">
-                    <input type="text" placeholder="Global Filter..." style="flex:1; padding:12px; border-radius:12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:#fff;">
-                </div>
-                <div class="table-area" id="aptFullList">
-                    </div>
-            </div>
+           <div id="appointmentsSec" class="section-content">
+    <h2><i class="fa-solid fa-calendar-days"></i> Master Appointment List</h2>
+    <div class="controls-row">
+        <input type="text" id="globalFilter" placeholder="Global Filter..." onkeyup="filterMasterTable()" style="flex:1; padding:12px; border-radius:12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:#fff;">
+    </div>
+    <div class="table-area">
+        <table>
+            <thead>
+                <tr><th>Patient</th><th>Dept</th><th>Doctor</th><th>Schedule</th><th>Status</th> <th>Payment</th> <th>Action</th></tr>
+            </thead>
+            <tbody id="masterTableBody">
+                <!-- البيانات ستظهر هنا -->
+            </tbody>
+        </table>
+    </div>
+</div>
 
             <div id="doctorsSec" class="section-content">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
@@ -397,7 +641,7 @@
                 <div class="table-area">
                     <table>
                         <thead>
-                            <tr><th>Doctor Name</th><th>Department</th><th>Exp</th><th>Status</th><th>Action</th></tr>
+                            <tr><th>Doctor Name</th><th>Department</th><th>Exp</th><th>Patients Count</th><th>Profile Image</th><th></th>Status</th><th>Action</th></tr>
                         </thead>
                         <tbody id="doctorsTableBody"></tbody>
                     </table>
@@ -406,30 +650,191 @@
 
             <div id="reportsSec" class="section-content">
                 <h2><i class="fa-solid fa-file-invoice-dollar"></i> Analytical Reports</h2>
-                <div class="dashboard-grid">
-                    <div class="widget-box">
-                        <h3>Monthly Performance</h3>
-                        <div style="height:200px;"><canvas id="reportLineChart"></canvas></div>
+                <div class="report-controls">
+                    <div class="report-control">
+                        <label>Time Filter</label>
+                        <select id="reportTimeFilter" onchange="handleReportFilterChange()">
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month" selected>This Month</option>
+                            <option value="ytd">Year-to-Date</option>
+                        </select>
                     </div>
-                    <div class="widget-box">
+                    <div class="report-control report-toggle">
+                        <span>Comparison</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="reportCompareToggle" checked onchange="handleCompareToggle()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="report-actions">
+                        <button id="downloadPdfBtn" class="btn-add" type="button">Download PDF Report</button>
+                        <button id="downloadCsvBtn" class="btn-add" type="button">Download CSV</button>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="widget-box widget-report-card">
+                        <h3>Performance Trend</h3>
+                        <div class="chart-wrapper"><canvas id="reportLineChart"></canvas></div>
+                    </div>
+                    <div class="widget-box widget-report-card">
                         <h3>Quick Stats</h3>
-                        <div id="reportSummary" style="line-height:2"></div>
+                        <div class="report-metrics report-metrics-grid">
+                            <div class="report-card">
+                                <span>Total Revenue</span>
+                                <h2 id="revenueCount">$0</h2>
+                            </div>
+                            <div class="report-card">
+                                <span>Projected Revenue</span>
+                                <h2 id="projectedRevenueCount">$0</h2>
+                            </div>
+                            <div class="report-card">
+                                <span>Losses</span>
+                                <h2 id="lossesCount">$0</h2>
+                            </div>
+                            <div class="report-card">
+                                <span>New Patients</span>
+                                <h2 id="newPatientsCount">0</h2>
+                            </div>
+                            <div class="report-card">
+                                <span>Success Rate</span>
+                                <h2 id="successRate">0%</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="widget-box widget-report-card">
+                        <h3>Department Distribution</h3>
+                        <div class="chart-wrapper"><canvas id="reportDoughnutChart"></canvas></div>
+                    </div>
+                    <div class="widget-box insights-box">
+                        <h3>Insights</h3>
+                        <div id="reportInsights" class="insights-text">Generating insights from appointment data...</div>
+                    </div>
+                </div>
+                <div id="reportSkeleton" class="report-skeleton">
+                    <div class="skeleton-title"></div>
+                    <div class="skeleton-row">
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                    </div>
+                    <div class="skeleton-row large">
+                        <div class="skeleton-chart"></div>
+                        <div class="skeleton-chart"></div>
                     </div>
                 </div>
             </div>
 
             <div id="settingsSec" class="section-content">
-                <h2><i class="fa-solid fa-gears"></i> Dashboard Settings</h2>
-                <div class="widget-box" style="max-width:600px;">
-                    <div class="form-group">
-                        <label>Hospital Name</label>
-                        <input type="text" value="Al-Shifa Medical Complex">
+                <h2><i class="fa-solid fa-gears"></i> Configuration Hub</h2>
+                <div class="settings-tabs">
+                    <button class="tab-btn active" onclick="switchSettingsTab('general', this)">General</button>
+                    <button class="tab-btn" onclick="switchSettingsTab('appearance', this)">Appearance</button>
+                    <button class="tab-btn" onclick="switchSettingsTab('security', this, this)">Security</button>
+                </div>
+                <div id="generalTab" class="settings-tab active">
+                    <div class="widget-box">
+                        <h3><i class="fa-solid fa-building"></i> Hospital Information</h3>
+                        <div class="form-group">
+                            <label>Hospital Name</label>
+                            <input type="text" id="hospitalName" placeholder="Enter hospital name">
+                        </div>
+                        <div class="form-group">
+                            <label>Admin Notification Email</label>
+                            <input type="email" id="adminEmail" placeholder="admin@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Consultation Fee ($)</label>
+                            <input type="number" id="consultationFee" min="0" step="0.01" placeholder="150">
+                        </div>
+                        <div class="form-group">
+                            <label>Currency Symbol</label>
+                            <input type="text" id="currencySymbol" maxlength="5" placeholder="$">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Admin Notification Email</label>
-                        <input type="email" value="admin@alshifa.com">
+                    <div class="widget-box">
+                        <h3><i class="fa-solid fa-tools"></i> Maintenance Tools</h3>
+                        <div class="maintenance-actions">
+                            <button class="btn-danger" onclick="openResetModal()"><i class="fa-solid fa-trash"></i> Reset System</button>
+                            <button class="btn-export" onclick="exportFullDatabase()"><i class="fa-solid fa-download"></i> Export Full Database</button>
+                        </div>
                     </div>
-                    <button class="btn-done">Save System Config</button>
+                </div>
+                <div id="appearanceTab" class="settings-tab">
+                    <div class="widget-box">
+                        <h3><i class="fa-solid fa-palette"></i> Branding</h3>
+                        <div class="form-group">
+                            <label>Clinic Logo</label>
+                            <div class="file-field">
+                                <input type="file" id="clinicLogo" accept="image/*" onchange="previewLogo(event)">
+                            </div>
+                            <div id="logoPreview" class="logo-preview" style="display:none;">
+                                <img id="logoImg" src="" alt="Logo Preview">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Admin Avatar</label>
+                            <div class="file-field">
+                                <input type="file" id="adminAvatar" accept="image/*" onchange="previewAdminAvatar(event)">
+                            </div>
+                            <div id="avatarPreview" class="logo-preview" style="display:none;">
+                                <img id="avatarImg" src="" alt="Avatar Preview">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Primary Color</label>
+                            <input type="color" id="primaryColor" value="#1db5c9">
+                        </div>
+                    </div>
+                    <div class="widget-box">
+                        <h3><i class="fa-solid fa-display"></i> Display Settings</h3>
+                        <div class="form-group toggle-group">
+                            <div class="toggle-row">
+                                <div class="toggle-desc">
+                                    <span class="toggle-title">Compact Mode</span>
+                                    <small>Reduces table padding for more data visibility</small>
+                                </div>
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="compactMode">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group toggle-group">
+                            <div class="toggle-row">
+                                <div class="toggle-desc">
+                                    <span class="toggle-title">System Sound Effects</span>
+                                    <small>Enable/disable notification sounds</small>
+                                </div>
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="soundEffects" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="securityTab" class="settings-tab">
+                    <div class="widget-box">
+                        <h3><i class="fa-solid fa-shield"></i> Security Settings</h3>
+                        <div class="form-group">
+                            <label>Change Admin Password</label>
+                            <input type="password" id="newPassword" placeholder="New password">
+                        </div>
+                        <div class="form-group">
+                            <label>Confirm New Password</label>
+                            <input type="password" id="confirmPassword" placeholder="Confirm password">
+                        </div>
+                        <button class="btn-warning" onclick="changePassword()"><i class="fa-solid fa-key"></i> Update Password</button>
+                    </div>
+                </div>
+                <div class="settings-actions">
+                    <button class="btn-done" onclick="saveSystemConfig()"><i class="fa-solid fa-save"></i> Save All Settings</button>
+                    <button class="btn-secondary" onclick="loadSystemConfig()"><i class="fa-solid fa-refresh"></i> Reload Settings</button>
                 </div>
             </div>
 
@@ -442,21 +847,133 @@
         let indexToDelete = null;
         let indexToUpdateStatus = null;
         let deptChart = null;
+        let analyticsLineChart = null;
+        let analyticsDoughnutChart = null;
+        let activityLog = JSON.parse(localStorage.getItem('activityLog')) || [];
 
         // New Data for Doctors
         let doctorsData = JSON.parse(localStorage.getItem('myDoctors')) || [
-            {name: "Ahmed Zaki", dept: "Cardiology", exp: "15", status: "Active"},
-            {name: "Sara Nour", dept: "Pediatrics", exp: "8", status: "On Leave"}
+            {name: "Ahmed Zaki", dept: "Cardiology", exp: "15", count: "1200", img: "img/default-doctor.png", status: "Active"},
+            {name: "Sara Nour", dept: "Pediatrics", exp: "8", count: "950", img: "img/default-doctor.png", status: "Active"}
         ];
+
+        // System Configuration
+        let systemConfig = JSON.parse(localStorage.getItem('systemConfig')) || {
+            hospitalName: 'Al-Shifa Medical Complex',
+            adminEmail: 'admin@alshifa.com',
+            consultationFee: 150,
+            currencySymbol: '$',
+            clinicLogo: '',
+            primaryColor: '#1db5c9',
+            compactMode: false,
+            soundEffects: true,
+            adminPassword: ADMIN_PASS,
+            adminAvatar: 'https://i.pravatar.cc/150?u=admin'
+        };
+
+        // === PROFESSIONAL TOAST NOTIFICATION SYSTEM ===
+        function showToast(message, type = 'info', duration = 3500) {
+            const container = document.getElementById('toastContainer');
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle', warning: 'fa-warning' };
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} toast-icon"></i><span class="toast-message">${message}</span><button class="toast-close" onclick="this.parentElement.remove()">×</button>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                if(toast.parentElement) { toast.classList.add('removing'); setTimeout(() => toast.remove(), 400); }
+            }, duration);
+        }
+
+        // === SYSTEM ACTIVITY LOGGING ===
+        function logAction(action, icon = 'fa-info-circle', type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const dateStr = new Date().toLocaleDateString();
+            const logEntry = { action, icon, type, timestamp: `${dateStr} ${timestamp}` };
+            activityLog.unshift(logEntry);
+            if(activityLog.length > 50) activityLog.pop();
+            localStorage.setItem('activityLog', JSON.stringify(activityLog));
+            updateActivityDisplay();
+        }
+
+        function updateActivityDisplay() {
+            const logContainer = document.getElementById('activityLog');
+            if(!logContainer) return;
+            logContainer.innerHTML = activityLog.slice(0, 15).map((log, i) => `
+                <div class="activity-item" style="animation: slideIn 0.3s ease forwards; animation-delay: ${i*0.05}s;">
+                    <i class="fa-solid ${log.icon}" style="color:var(--primary);"></i>
+                    <span class="activity-action">${log.action}</span>
+                    <span class="activity-time">${log.timestamp}</span>
+                </div>`).join('');
+        }
+
+        function clearActivityLog() {
+            if(confirm('Clear all activity logs?')) {
+                activityLog = [];
+                localStorage.setItem('activityLog', JSON.stringify(activityLog));
+                updateActivityDisplay();
+                showToast('Activity log cleared', 'info');
+                logAction('Activity log cleared', 'fa-trash', 'warning');
+            }
+        }
+
+        // === DATA EXPORT ===
+        function exportData() {
+            const exportObj = {
+                exportedAt: new Date().toISOString(),
+                bookings: JSON.parse(localStorage.getItem('myBookings')) || [],
+                doctors: JSON.parse(localStorage.getItem('myDoctors')) || [],
+                activityLog: activityLog
+            };
+            const dataStr = JSON.stringify(exportObj, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `MedCare-Export-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showToast('Data exported successfully', 'success');
+            logAction('System data exported to JSON', 'fa-download', 'success');
+        }
+
+        // === BI-DIRECTIONAL SYNC ===
+        function syncWithMainPage() {
+            localStorage.setItem('myDoctors', JSON.stringify(doctorsData));
+            const syncEl = document.getElementById('lastSync');
+            if(syncEl) syncEl.innerText = new Date().toLocaleTimeString('en-US', { hour12: false });
+            updateSystemStatus();
+        }
+
+        // Refresh bookings if storage changes from another page/tab
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'myBookings' || event.key === 'myBookings_lastUpdated') {
+                renderData();
+                checkNotifications();
+                updateSystemStatus();
+            }
+        });
 
         // Login Logic (Original)
         function handleLogin() {
-            if(document.getElementById('userInput').value === ADMIN_USER && document.getElementById('passInput').value === ADMIN_PASS) {
+            const userInput = document.getElementById('userInput').value;
+            const passInput = document.getElementById('passInput').value;
+            
+            if(userInput === ADMIN_USER && passInput === systemConfig.adminPassword) {
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('mainDash').style.display = 'block';
-                document.body.classList.add('logged-in'); // تفعيل الـ Sidebar
+                document.body.classList.add('logged-in');
+                
+                showToast('Welcome back, Admin! 👋', 'success');
+                logAction('🔐 Admin logged in successfully', 'fa-sign-in-alt', 'success');
+                
                 renderData(); startClock(); initChart(); checkNotifications(); renderDoctors();
-            } else { alert("Error: Access Denied!"); }
+                syncWithMainPage();
+                setInterval(syncWithMainPage, 5000);
+                setInterval(updateActivityDisplay, 2000);
+            } else { 
+                showToast('❌ Invalid credentials', 'error');
+                logAction('⚠️ Failed login attempt', 'fa-exclamation-circle', 'error');
+            }
         }
 
         // Section Switching (New Logic)
@@ -468,6 +985,7 @@
             el.classList.add('active');
 
             if(secId === 'reports') initReportCharts();
+            logAction(`Navigated to ${secId.toUpperCase()} section`, 'fa-arrow-right');
         }
 
         document.getElementById('userInput').addEventListener('keypress', function(e) { if(e.key === 'Enter') handleLogin(); });
@@ -478,89 +996,671 @@
             document.body.classList.toggle('light-mode');
             const icon = document.querySelector('.btn-theme i');
             icon.classList.toggle('fa-moon'); icon.classList.toggle('fa-sun');
+            showToast('Theme changed ✨', 'info');
         }
 
         // Render Data (Original)
-        function renderData() {
-            const data = JSON.parse(localStorage.getItem('myBookings')) || [];
-            document.getElementById('totalCount').innerText = data.length;
-            document.getElementById('confirmedCount').innerText = data.filter(b => b.status === 'Confirmed').length;
-            document.getElementById('pendingCount').innerText = data.filter(b => b.status === 'Pending' || !b.status).length;
-            updateNextPatient(data);
+      function renderData() {
+    const data = JSON.parse(localStorage.getItem('myBookings')) || [];
+    
+    // تحديث الإحصائيات (العدادات)
+    document.getElementById('totalCount').innerText = data.length;
+    document.getElementById('confirmedCount').innerText = data.filter(b => b.status === 'Confirmed').length;
+    document.getElementById('pendingCount').innerText = data.filter(b => b.status === 'Pending' || !b.status).length;
+    
+    // تحديث جدول الـ Overview
+    const overviewBody = document.getElementById('tableBody');
+    const masterBody = document.getElementById('masterTableBody'); // الجدول الشامل
+    
+    const rowsHtml = data.map((b, i) => `
+        <tr>
+            <td><strong>${b.patient}</strong><br><small>ID-${b.id || i}</small></td>
+            <td>${b.dept}</td>
+            <td>Dr. ${b.doctor}</td>
+            <td>${b.date}<br>${b.time}</td>
+            <td><span class="status-badge status-${(b.status || 'pending').toLowerCase()}" onclick="openStatusModal(${i})">${b.status || 'Pending'}</span></td>
+            <td><button class="view-btn" onclick='showPayDetails(${JSON.stringify(b)})'>View</button></td>
+            <td><button class="del-btn" onclick="openDeleteModal(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
+        </tr>
+    `).join('');
 
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = data.map((b, i) => `
-                <tr style="animation: fadeIn 0.3s ease forwards; animation-delay: ${i*0.05}s">
-                    <td><strong>${b.patient}</strong><br><small style="opacity:0.5;">ID-${b.id}</small></td>
-                    <td><span style="background:var(--glass); padding:5px 10px; border-radius:8px;">${b.dept}</span></td>
-                    <td>Dr. ${b.doctor}</td>
-                    <td><span style="color:var(--primary); font-weight:600;">${b.date}</span><br><small>${b.time}</small></td>
-                    <td><span class="status-badge status-${(b.status || 'pending').toLowerCase()}" onclick="openStatusModal(${i})">${b.status || 'Pending'}</span></td>
-                    <td><button class="view-btn" onclick='showPayDetails(${JSON.stringify(b)})'>View</button></td>
-                    <td><button class="del-btn" onclick="openDeleteModal(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
-                </tr>
-            `).join('');
-            if(deptChart) updateChart(data);
-            updateReportSummary(data);
-        }
+    // وضع البيانات في الجدولين
+    if(overviewBody) overviewBody.innerHTML = rowsHtml;
+    if(masterBody) masterBody.innerHTML = rowsHtml;
+
+    updateNextPatient(data);
+    if(deptChart) updateChart(data);
+    if (analyticsLineChart || analyticsDoughnutChart) updateReportAnalytics(data);
+}
 
         // Doctors Logic (New)
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('imagePreview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateSystemStatus() {
+            const bookingCountEl = document.getElementById('bookingCount');
+            const doctorCountEl = document.getElementById('doctorCount');
+            const syncEl = document.getElementById('lastSync');
+            const bookings = JSON.parse(localStorage.getItem('myBookings')) || [];
+            const activeDoctors = doctorsData.filter(d => d.status === 'Active').length;
+            if (bookingCountEl) bookingCountEl.innerText = bookings.length;
+            if (doctorCountEl) doctorCountEl.innerText = activeDoctors;
+            if (syncEl && !syncEl.innerText) syncEl.innerText = new Date().toLocaleTimeString('en-US', { hour12: false });
+        }
+
         function renderDoctors() {
             const tbody = document.getElementById('doctorsTableBody');
             tbody.innerHTML = doctorsData.map((d, i) => `
-                <tr>
+                <tr style="animation: fadeIn 0.3s ease forwards; animation-delay: ${i*0.05}s;">
                     <td><strong>${d.name}</strong></td>
                     <td>${d.dept}</td>
                     <td>${d.exp} Yrs</td>
+                    <td>${d.count || 'N/A'}</td>
+                    <td><img src="${d.img || 'img/default-doctor.png'}" style="width:50px; height:50px; border-radius:50%; object-fit:cover; border:2px solid var(--primary);"></td>
                     <td><span style="color:${d.status === 'Active' ? 'var(--success)' : 'var(--danger)'}">${d.status}</span></td>
                     <td><button class="del-btn" onclick="deleteDoc(${i})"><i class="fa-solid fa-user-xmark"></i></button></td>
                 </tr>
             `).join('');
+            localStorage.setItem('myDoctors', JSON.stringify(doctorsData));
+            updateSystemStatus();
         }
 
         function saveDoctor() {
             const name = document.getElementById('newDocName').value;
             const dept = document.getElementById('newDocSpec').value;
             const exp = document.getElementById('newDocExp').value;
-            if(!name) return alert("Enter Doctor Name");
-            doctorsData.push({name, dept, exp, status: "Active"});
+            const count = document.getElementById('newDocCount').value;
+            const imgFile = document.getElementById('newDocImg').files[0];
+            
+            if(!name) {
+                showToast('Please enter doctor name', 'error');
+                return;
+            }
+            
+            let img = 'img/default-doctor.png'; // صورة افتراضية ثابتة
+            
+            if (imgFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img = e.target.result; // حفظ كـ base64
+                    addDoctorToStorage(name, dept, exp, count, img);
+                };
+                reader.readAsDataURL(imgFile);
+            } else {
+                addDoctorToStorage(name, dept, exp, count, img);
+            }
+        }
+
+        function addDoctorToStorage(name, dept, exp, count, img) {
+            doctorsData.push({name, dept, exp, count, img, status: "Active"});
             localStorage.setItem('myDoctors', JSON.stringify(doctorsData));
             renderDoctors();
             closeModal('doctorAddModal');
+            
+            // إعادة تعيين النموذج
+            document.getElementById('newDocName').value = '';
+            document.getElementById('newDocExp').value = '';
+            document.getElementById('newDocCount').value = '';
+            document.getElementById('newDocImg').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            
+            showToast(`Dr. ${name} added successfully`, 'success');
+            logAction(`New doctor added: Dr. ${name} (${dept})`, 'fa-user-plus', 'success');
         }
 
         function deleteDoc(i) {
+            const docName = doctorsData[i].name;
             doctorsData.splice(i, 1);
             localStorage.setItem('myDoctors', JSON.stringify(doctorsData));
             renderDoctors();
+            showToast(`Dr. ${docName} removed`, 'warning');
+            logAction(`Doctor removed: Dr. ${docName}`, 'fa-user-xmark', 'warning');
         }
 
         // Reports Logic (New)
+        let REPORT_FEE = systemConfig.consultationFee || 150;
+        let reportFilter = 'month';
+        let comparePeriod = true;
+        const reportColors = {
+            primary: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#1db5c9',
+            accent: '#9b59b6',
+            success: getComputedStyle(document.documentElement).getPropertyValue('--success').trim() || '#2ecc71',
+            danger: getComputedStyle(document.documentElement).getPropertyValue('--danger').trim() || '#ff4757'
+        };
+
+        function activateReportSkeleton(active) {
+            const skeleton = document.getElementById('reportSkeleton');
+            if (skeleton) skeleton.classList.toggle('active', active);
+        }
+
+        function handleReportFilterChange() {
+            const select = document.getElementById('reportTimeFilter');
+            reportFilter = select ? select.value : 'month';
+            refreshReportData();
+        }
+
+        function handleCompareToggle() {
+            comparePeriod = document.getElementById('reportCompareToggle').checked;
+            refreshReportData();
+        }
+
+        function parseBookingDate(dateString) {
+            const dt = new Date(dateString);
+            return isNaN(dt) ? null : dt;
+        }
+
+        function getTimeRange(filter) {
+            const now = new Date();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            switch (filter) {
+                case 'today':
+                    return { start: todayStart, end: new Date(todayStart.getTime() + 24 * 60 * 60 * 1000 - 1), unit: 'hour' };
+                case 'week': {
+                    const day = todayStart.getDay();
+                    const monday = new Date(todayStart.getTime() - ((day + 6) % 7) * 24 * 60 * 60 * 1000);
+                    return { start: monday, end: new Date(monday.getTime() + 7 * 24 * 60 * 60 * 1000 - 1), unit: 'day' };
+                }
+                case 'month': {
+                    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                    return { start: monthStart, end: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59), unit: 'day' };
+                }
+                case 'ytd': {
+                    const yearStart = new Date(now.getFullYear(), 0, 1);
+                    return { start: yearStart, end: now, unit: 'month' };
+                }
+                default:
+                    return { start: todayStart, end: now, unit: 'day' };
+            }
+        }
+
+        function getPreviousRange(range) {
+            const duration = range.end.getTime() - range.start.getTime() + 1;
+            const prevEnd = new Date(range.start.getTime() - 1);
+            const prevStart = new Date(prevEnd.getTime() - duration + 1);
+            return { start: prevStart, end: prevEnd, unit: range.unit };
+        }
+
+        function getLabelForDate(date, unit) {
+            if (unit === 'hour') return `${String(date.getHours()).padStart(2, '0')}:00`;
+            if (unit === 'day') return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
+            if (unit === 'month') return date.toLocaleDateString('en-US', { month: 'short' });
+            return date.toLocaleDateString();
+        }
+
+        function buildRangeLabels(range) {
+            const labels = [];
+            const current = new Date(range.start);
+            while (current <= range.end) {
+                labels.push(getLabelForDate(current, range.unit));
+                if (range.unit === 'hour') current.setHours(current.getHours() + 1);
+                else if (range.unit === 'day') current.setDate(current.getDate() + 1);
+                else current.setMonth(current.getMonth() + 1);
+            }
+            return labels;
+        }
+
+        function bookingMatchesRange(booking, range) {
+            const date = parseBookingDate(booking.date);
+            return date && date >= range.start && date <= range.end;
+        }
+
+        function countBookingsBySeries(bookings, range) {
+            const counts = {};
+            buildRangeLabels(range).forEach(label => counts[label] = 0);
+            bookings.forEach(b => {
+                const date = parseBookingDate(b.date);
+                if (!date) return;
+                if (date < range.start || date > range.end) return;
+                const label = getLabelForDate(date, range.unit);
+                if (counts[label] !== undefined) counts[label] += 1;
+            });
+            return Object.values(counts);
+        }
+
+        function getDepartmentDistribution(bookings) {
+            const counts = {};
+            bookings.forEach(b => {
+                const dept = b.dept || 'Unknown';
+                counts[dept] = (counts[dept] || 0) + 1;
+            });
+            return counts;
+        }
+
+        function getQuickStats(bookings) {
+            const confirmedBookings = bookings.filter(b => b.status === 'Confirmed');
+            const cancelledBookings = bookings.filter(b => b.status === 'Cancelled');
+            const pendingBookings = bookings.filter(b => b.status === 'Pending');
+            const revenue = confirmedBookings.length * REPORT_FEE;
+            const projected = revenue + pendingBookings.length * REPORT_FEE;
+            const losses = cancelledBookings.length * REPORT_FEE;
+            const range = getTimeRange(reportFilter);
+            const currentBookings = bookings.filter(b => bookingMatchesRange(b, range));
+            const uniquePatients = [...new Set(currentBookings.map(b => (b.patient || '').trim().toLowerCase()))].filter(Boolean).length;
+            const relevantCount = bookings.filter(b => ['Confirmed', 'Cancelled', 'Pending'].includes(b.status)).length || bookings.length;
+            const successRate = relevantCount ? Math.round((confirmedBookings.length / relevantCount) * 100) : 0;
+            return { revenue, projected, losses, uniquePatients, successRate };
+        }
+
+        function generateInsightSentences(bookings) {
+            const range = getTimeRange(reportFilter);
+            const currentBookings = bookings.filter(b => bookingMatchesRange(b, range));
+            if (!currentBookings.length) return 'No appointments available for the selected period.';
+
+            const doctorCounts = {};
+            const deptPending = {};
+            const deptCount = {};
+            currentBookings.forEach(b => {
+                const doctor = b.doctor || 'Unknown';
+                doctorCounts[doctor] = (doctorCounts[doctor] || 0) + 1;
+                const dept = b.dept || 'Unknown';
+                deptCount[dept] = (deptCount[dept] || 0) + 1;
+                if (b.status === 'Pending') deptPending[dept] = (deptPending[dept] || 0) + 1;
+            });
+
+            const sortedDoctors = Object.entries(doctorCounts).sort((a, b) => b[1] - a[1]);
+            const topDoctor = sortedDoctors[0];
+            const sentences = [];
+            if (topDoctor) sentences.push(`Dr. ${topDoctor[0]} is your most active doctor in the selected period with ${topDoctor[1]} bookings.`);
+
+            const largestDept = Object.entries(deptCount).sort((a, b) => b[1] - a[1])[0];
+            if (largestDept) sentences.push(`${largestDept[0]} remains the busiest department with ${largestDept[1]} appointments.`);
+
+            const pendingInsight = Object.entries(deptPending).sort((a, b) => b[1] - a[1])[0];
+            if (pendingInsight && pendingInsight[1] >= 2) {
+                sentences.push(`Wait times appear to be increasing in the ${pendingInsight[0]} department.`);
+            }
+
+            const previousRange = getPreviousRange(range);
+            const previousBookings = bookings.filter(b => bookingMatchesRange(b, previousRange));
+            if (previousBookings.length) {
+                const currentConfirmed = currentBookings.filter(b => b.status === 'Confirmed').length;
+                const prevConfirmed = previousBookings.filter(b => b.status === 'Confirmed').length;
+                const change = prevConfirmed === 0 ? 100 : Math.round(((currentConfirmed - prevConfirmed) / prevConfirmed) * 100);
+                sentences.push(`Confirmed bookings ${change >= 0 ? 'increased' : 'decreased'} by ${Math.abs(change)}% over the previous period.`);
+            }
+            return sentences.slice(0, 3).join(' ');
+        }
+
+        function formatMoney(value) {
+            return `${systemConfig.currencySymbol || '$'}${value.toLocaleString()}`;
+        }
+
         function updateReportSummary(data) {
-            const confirmed = data.filter(b => b.status === 'Confirmed').length;
-            const earnings = confirmed * 150; // افتراض الكشف بـ 150
-            document.getElementById('reportSummary').innerHTML = `
-                <p>Total Revenue Estimate: <b style="color:var(--success)">$${earnings}</b></p>
-                <p>Conversion Rate: <b>${((confirmed/data.length)*100 || 0).toFixed(1)}%</b></p>
-                <p>Top Dept: <b>Cardiology</b></p>
-            `;
+            const { revenue, projected, losses, uniquePatients, successRate } = getQuickStats(data);
+            document.getElementById('revenueCount').innerText = formatMoney(revenue);
+            document.getElementById('projectedRevenueCount').innerText = formatMoney(projected);
+            document.getElementById('lossesCount').innerText = formatMoney(losses);
+            document.getElementById('newPatientsCount').innerText = uniquePatients;
+            document.getElementById('successRate').innerText = `${successRate}%`;
+            document.getElementById('reportInsights').innerText = generateInsightSentences(data);
+        }
+
+        function updateReportCharts(data) {
+            const range = getTimeRange(reportFilter);
+            const filtered = data.filter(b => bookingMatchesRange(b, range));
+            const labels = buildRangeLabels(range);
+            const currentData = countBookingsBySeries(filtered, range);
+            let previousData = [];
+
+            if (comparePeriod) {
+                const previousRange = getPreviousRange(range);
+                const previousBookings = data.filter(b => bookingMatchesRange(b, previousRange));
+                previousData = countBookingsBySeries(previousBookings, previousRange);
+            }
+
+            if (analyticsLineChart) {
+                analyticsLineChart.data.labels = labels;
+                analyticsLineChart.data.datasets[0].label = 'Current Period';
+                analyticsLineChart.data.datasets[0].data = currentData;
+                analyticsLineChart.data.datasets[1].hidden = !comparePeriod;
+                analyticsLineChart.data.datasets[1].data = previousData;
+                analyticsLineChart.update();
+            }
+
+            const deptData = getDepartmentDistribution(filtered);
+            const deptLabels = Object.keys(deptData);
+            const deptValues = Object.values(deptData);
+            if (analyticsDoughnutChart) {
+                analyticsDoughnutChart.data.labels = deptLabels;
+                analyticsDoughnutChart.data.datasets[0].data = deptValues;
+                analyticsDoughnutChart.update();
+            }
         }
 
         function initReportCharts() {
-            const ctx = document.getElementById('reportLineChart').getContext('2d');
-            new Chart(ctx, {
+            const lineCtx = document.getElementById('reportLineChart').getContext('2d');
+            const doughnutCtx = document.getElementById('reportDoughnutChart').getContext('2d');
+
+            analyticsLineChart = new Chart(lineCtx, {
                 type: 'line',
                 data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr'],
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Current Period',
+                            data: [],
+                            borderColor: reportColors.primary,
+                            backgroundColor: 'rgba(29, 181, 201, 0.16)',
+                            pointBackgroundColor: reportColors.primary,
+                            borderWidth: 3,
+                            tension: 0.35,
+                            fill: true,
+                            pointRadius: 4,
+                            borderCapStyle: 'round'
+                        },
+                        {
+                            label: 'Previous Period',
+                            data: [],
+                            borderColor: reportColors.accent,
+                            backgroundColor: 'rgba(155, 89, 182, 0.14)',
+                            pointBackgroundColor: reportColors.accent,
+                            borderWidth: 2,
+                            tension: 0.35,
+                            borderDash: [6, 4],
+                            fill: false,
+                            pointRadius: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: { ticks: { color: '#a8cddb' }, grid: { color: 'rgba(255,255,255,0.08)' } },
+                        y: { ticks: { color: '#a8cddb' }, grid: { color: 'rgba(255,255,255,0.08)' }, beginAtZero: true }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#fff', boxWidth: 12, padding: 20 } },
+                        tooltip: {
+                            backgroundColor: 'rgba(3,16,30,0.95)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            callbacks: {
+                                label: context => `${context.dataset.label}: ${context.parsed.y}`
+                            }
+                        }
+                    }
+                }
+            });
+
+            analyticsDoughnutChart = new Chart(doughnutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
                     datasets: [{
-                        label: 'Appointments',
-                        data: [12, 19, 3, 5],
-                        borderColor: '#1db5c9',
-                        tension: 0.3
+                        data: [],
+                        backgroundColor: ['#1db5c9', '#2ecc71', '#9b59b6', '#f39c12', '#ff4757', '#5b9bd5'],
+                        borderColor: 'rgba(255,255,255,0.08)',
+                        borderWidth: 1
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#fff' } },
+                        tooltip: {
+                            backgroundColor: 'rgba(3,16,30,0.95)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            callbacks: {
+                                label: context => {
+                                    const total = context.dataset.data.reduce((sum, value) => sum + value, 0);
+                                    const value = context.parsed;
+                                    const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${context.label}: ${value} (${percent}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
             });
+        }
+
+        function refreshReportData() {
+            activateReportSkeleton(true);
+            setTimeout(() => {
+                const data = JSON.parse(localStorage.getItem('myBookings')) || [];
+                updateReportSummary(data);
+                updateReportCharts(data);
+                activateReportSkeleton(false);
+            }, 250);
+        }
+
+        function downloadCsv() {
+            const data = JSON.parse(localStorage.getItem('myBookings')) || [];
+            if (!data.length) return;
+            const header = ['id', 'patient', 'dept', 'doctor', 'date', 'time', 'status', 'payment', 'paymentDetails'];
+            const rows = data.map(row => header.map(key => JSON.stringify(row[key] || '')).join(','));
+            const csv = [header.join(','), ...rows].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `MedCare-Bookings-${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        // Settings Functions
+        function switchSettingsTab(tabId, element) {
+            document.querySelectorAll('.settings-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId + 'Tab').classList.add('active');
+            element.classList.add('active');
+        }
+
+        function loadSystemConfig() {
+            document.getElementById('hospitalName').value = systemConfig.hospitalName;
+            document.getElementById('adminEmail').value = systemConfig.adminEmail;
+            document.getElementById('consultationFee').value = systemConfig.consultationFee;
+            document.getElementById('currencySymbol').value = systemConfig.currencySymbol;
+            document.getElementById('primaryColor').value = systemConfig.primaryColor;
+            document.getElementById('compactMode').checked = systemConfig.compactMode;
+            document.getElementById('soundEffects').checked = systemConfig.soundEffects;
+            if (systemConfig.clinicLogo) {
+                document.getElementById('logoImg').src = systemConfig.clinicLogo;
+                document.getElementById('logoPreview').style.display = 'block';
+            }
+            if (systemConfig.adminAvatar) {
+                document.getElementById('avatarImg').src = systemConfig.adminAvatar;
+                document.getElementById('avatarPreview').style.display = 'block';
+            }
+            applySystemConfig();
+        }
+
+        function saveSystemConfig() {
+            systemConfig.hospitalName = document.getElementById('hospitalName').value.trim() || 'MedCare Clinic';
+            systemConfig.adminEmail = document.getElementById('adminEmail').value.trim();
+            systemConfig.consultationFee = parseFloat(document.getElementById('consultationFee').value) || 150;
+            systemConfig.currencySymbol = document.getElementById('currencySymbol').value.trim() || '$';
+            systemConfig.primaryColor = document.getElementById('primaryColor').value;
+            systemConfig.compactMode = document.getElementById('compactMode').checked;
+            systemConfig.soundEffects = document.getElementById('soundEffects').checked;
+
+            localStorage.setItem('systemConfig', JSON.stringify(systemConfig));
+            applySystemConfig();
+            showToast('Settings saved successfully!', 'success');
+            logAction('System configuration updated', 'fa-save', 'success');
+        }
+
+        function applySystemConfig() {
+            // Update CSS variables
+            document.documentElement.style.setProperty('--primary', systemConfig.primaryColor);
+
+            // Update hospital name in header
+            const logoSpan = document.querySelector('.logo span');
+            if (logoSpan) logoSpan.firstChild.textContent = systemConfig.hospitalName;
+
+            // Update logo
+            const logoLink = document.querySelector('.logo');
+
+            // Update report fee
+            REPORT_FEE = systemConfig.consultationFee;
+            if (logoLink) {
+                let logoImg = logoLink.querySelector('img');
+                if (systemConfig.clinicLogo) {
+                    if (!logoImg) {
+                        logoImg = document.createElement('img');
+                        logoLink.insertBefore(logoImg, logoLink.firstChild);
+                    }
+                    logoImg.src = systemConfig.clinicLogo;
+                    logoImg.style.width = '30px';
+                    logoImg.style.height = '30px';
+                    logoImg.style.marginRight = '10px';
+                    logoImg.style.borderRadius = '50%';
+                } else if (logoImg) {
+                    logoImg.remove();
+                }
+            }
+
+            // Update admin avatar in sidebar
+            const sidebarAvatar = document.querySelector('.user-section img');
+            if (sidebarAvatar) {
+                sidebarAvatar.src = systemConfig.adminAvatar || 'https://i.pravatar.cc/150?u=admin';
+            }
+
+            // Apply compact mode
+            document.body.classList.toggle('compact-mode', systemConfig.compactMode);
+
+            // Update report fee
+            REPORT_FEE = systemConfig.consultationFee;
+
+            // Update report fee and refresh
+            if (analyticsLineChart || analyticsDoughnutChart) {
+                refreshReportData();
+            }
+        }
+
+        function previewLogo(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    systemConfig.clinicLogo = e.target.result;
+                    document.getElementById('logoImg').src = e.target.result;
+                    document.getElementById('logoPreview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function previewAdminAvatar(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    systemConfig.adminAvatar = e.target.result;
+                    document.getElementById('avatarImg').src = e.target.result;
+                    document.getElementById('avatarPreview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function openResetModal() {
+            document.getElementById('resetModal').style.display = 'flex';
+            document.getElementById('resetConfirmInput').value = '';
+            document.getElementById('confirmResetBtn').disabled = true;
+            document.getElementById('resetConfirmInput').addEventListener('input', function() {
+                document.getElementById('confirmResetBtn').disabled = this.value !== 'RESET';
+            });
+        }
+
+        function confirmResetSystem() {
+            if (document.getElementById('resetConfirmInput').value === 'RESET') {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        function exportFullDatabase() {
+            const exportData = {
+                exportedAt: new Date().toISOString(),
+                systemConfig: systemConfig,
+                bookings: JSON.parse(localStorage.getItem('myBookings')) || [],
+                doctors: JSON.parse(localStorage.getItem('myDoctors')) || [],
+                activityLog: JSON.parse(localStorage.getItem('activityLog')) || []
+            };
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `MedCare-Full-Backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showToast('Full database exported!', 'success');
+            logAction('Full database backup exported', 'fa-download', 'success');
+        }
+
+        function changePassword() {
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            if (!newPass || newPass !== confirmPass) {
+                showToast('Passwords do not match!', 'error');
+                return;
+            }
+            systemConfig.adminPassword = newPass;
+            localStorage.setItem('systemConfig', JSON.stringify(systemConfig));
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            showToast('Password updated successfully!', 'success');
+            logAction('Admin password changed', 'fa-key', 'warning');
+        }
+
+        function downloadAnalyticsPdf() {
+            const reportNode = document.getElementById('reportsSec');
+            if (!reportNode) return;
+            const title = 'MedCare BI Analytics Report';
+            const subtitle = `Filter: ${document.getElementById('reportTimeFilter').value.replace('-', ' ')}`;
+            activateReportSkeleton(true);
+            html2canvas(reportNode, { backgroundColor: '#0b0f1a', scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF({ orientation: 'landscape', unit: 'px', format: 'a4' });
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                pdf.setFillColor('#0b0f1a');
+                pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+                pdf.setTextColor('#ffffff');
+                pdf.setFontSize(22);
+                pdf.text(title, 30, 40);
+                pdf.setFontSize(12);
+                pdf.setTextColor('#9db8d9');
+                pdf.text(subtitle, 30, 60);
+                const imageHeight = (canvas.height * (pageWidth - 60)) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 30, 75, pageWidth - 60, imageHeight);
+                pdf.save(`MedCare-BI-${new Date().toISOString().split('T')[0]}.pdf`);
+            }).finally(() => activateReportSkeleton(false));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const downloadBtn = document.getElementById('downloadPdfBtn');
+            if (downloadBtn) downloadBtn.addEventListener('click', downloadAnalyticsPdf);
+            const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+            if (downloadCsvBtn) downloadCsvBtn.addEventListener('click', downloadCsv);
+            const filterSelect = document.getElementById('reportTimeFilter');
+            if (filterSelect) filterSelect.addEventListener('change', handleReportFilterChange);
+            const compareToggle = document.getElementById('reportCompareToggle');
+            if (compareToggle) compareToggle.addEventListener('change', handleCompareToggle);
+            initReportCharts();
+            refreshReportData();
+            loadSystemConfig();
+        });
+
+        function updateReportAnalytics(data) {
+            updateReportSummary(data);
+            updateReportCharts(data);
         }
 
         // Modals & Status Logic (Original)
@@ -576,13 +1676,30 @@
             document.getElementById('payModal').style.display = 'flex';
         }
 
-        function openStatusModal(i) { indexToUpdateStatus = i; document.getElementById('statusModal').style.display = 'flex'; }
+        function openStatusModal(i) { 
+            indexToUpdateStatus = i; 
+            const data = JSON.parse(localStorage.getItem('myBookings')) || [];
+            if(data[i] && data[i].prescription) {
+                document.getElementById('prescriptionInput').value = data[i].prescription;
+            } else {
+                document.getElementById('prescriptionInput').value = '';
+            }
+            document.getElementById('statusModal').style.display = 'flex'; 
+        }
         function changeStatus(s) {
             let data = JSON.parse(localStorage.getItem('myBookings'));
+            const oldStatus = data[indexToUpdateStatus].status || 'Pending';
+            const prescription = document.getElementById('prescriptionInput').value;
+            const patient = data[indexToUpdateStatus].patient;
+            
             data[indexToUpdateStatus].status = s;
+            data[indexToUpdateStatus].prescription = prescription;
             data[indexToUpdateStatus].isViewed = true;
             localStorage.setItem('myBookings', JSON.stringify(data));
             renderData(); closeModal('statusModal'); checkNotifications();
+            
+            showToast(`Appointment: ${patient} → ${s}`, 'success');
+            logAction(`Status changed for ${patient}: ${oldStatus} → ${s}`, 'fa-check-circle', 'success');
         }
 
         // Notifications (Original)
@@ -648,12 +1765,21 @@
 
         // Delete Logic (Original)
         function openDeleteModal(i) { indexToDelete = i; document.getElementById('deleteModal').style.display = 'flex'; }
-        document.getElementById('confirmDeleteBtn').onclick = () => {
-            let data = JSON.parse(localStorage.getItem('myBookings'));
-            data.splice(indexToDelete, 1);
-            localStorage.setItem('myBookings', JSON.stringify(data));
-            renderData(); closeModal('deleteModal'); checkNotifications();
-        };
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            if(confirmBtn) {
+                confirmBtn.onclick = () => {
+                    let data = JSON.parse(localStorage.getItem('myBookings'));
+                    const patientName = data[indexToDelete].patient;
+                    data.splice(indexToDelete, 1);
+                    localStorage.setItem('myBookings', JSON.stringify(data));
+                    renderData(); closeModal('deleteModal'); checkNotifications();
+                    showToast(`Appointment deleted: ${patientName}`, 'warning');
+                    logAction(`Appointment deleted: ${patientName}`, 'fa-trash', 'warning');
+                };
+            }
+            updateActivityDisplay();
+        });
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         function startClock() { setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000); }
